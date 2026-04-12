@@ -67,10 +67,7 @@ function StackSelector() {
       stack: stackId,
     }
 
-    setSelectedStack(stackId)
-    setSavedProject(project)
-    setMessage(`Project configured for ${stackOptions.find((stack) => stack.id === stackId)?.title}.`)
-    console.log('Saved project:', project)
+    navigate('/diagram-selector', { state: project })
   }
 
   return (
