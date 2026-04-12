@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './StackSelector.css'
-import mernImage from '../../../assets/StackSelector-images/MernStack.png'
-import pernImage from '../../../assets/StackSelector-images/Pern.jpg'
-import meanImage from '../../../assets/StackSelector-images/MEAN_Stack.webp'
-import mevnImage from '../../../assets/StackSelector-images/MEVN_Stack.jpg'
-import lampImage from '../../../assets/StackSelector-images/LAMP_Stack.png'
-import jamImage from '../../../assets/StackSelector-images/JAM_Stack.png'
+
+const mernImage = new URL('../../../assets/StackSelector-images/MernStack.png', import.meta.url).href
+const pernImage = new URL('../../../assets/StackSelector-images/Pern.jpg', import.meta.url).href
+const meanImage = new URL('../../../assets/StackSelector-images/MEAN_Stack.webp', import.meta.url).href
+const mevnImage = new URL('../../../assets/StackSelector-images/MEVN_Stack.jpg', import.meta.url).href
+const lampImage = new URL('../../../assets/StackSelector-images/LAMP_Stack.png', import.meta.url).href
+const jamImage = new URL('../../../assets/StackSelector-images/JAM_Stack.png', import.meta.url).href
 
 const stackOptions = [
   {

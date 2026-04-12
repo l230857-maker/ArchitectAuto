@@ -47,8 +47,8 @@ function Dashboard() {
     navigate('/stack-selector')
   }
 
-  const handleProjectClick = (projectId) => {
-    console.log('Project clicked:', projectId)
+  const handleProjectClick = (project) => {
+    navigate('/project-details', { state: project })
   }
 
   const handleLogout = () => {
@@ -89,7 +89,7 @@ function Dashboard() {
                 <div
                   key={project.id}
                   className="project-card"
-                  onClick={() => handleProjectClick(project.id)}
+                  onClick={() => handleProjectClick(project)}
                 >
                   <h4 className="project-name">{project.name}</h4>
                   <div className="project-info">
