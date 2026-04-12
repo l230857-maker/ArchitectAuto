@@ -43,7 +43,7 @@ const diagramCards = [
 function ProjectDetails() {
   const navigate = useNavigate()
   const location = useLocation()
-  const project = location.state
+  const project = location.state?.project ?? location.state
 
   return (
     <div className="project-details-container">
@@ -97,20 +97,32 @@ function ProjectDetails() {
           )}
 
           <div className="diagram-grid">
-            {diagramCards.slice(0, 5).map((diagram) => (
-              <div key={diagram.id} className="diagram-card">
-                <div className="diagram-card-image-wrapper">
-                  <img
-                    src={diagram.image}
-                    alt={diagram.title}
-                    className="diagram-card-image"
-                  />
-                </div>
-                <div className="diagram-card-body">
-                  <h3>{diagram.title}</h3>
-                </div>
-              </div>
-            ))}
+            {diagramCards.slice(0, 5).map((diagram) => {
+              const isClassDiagram = diagram.id === 'class'
+              return (
+                <button
+                  key={diagram.id}
+                  type="button"
+                  className={`diagram-card ${isClassDiagram ? 'clickable' : ''}`}
+                  onClick={() => {
+                    if (isClassDiagram) {
+                      navigate('/class-diagram', { state: { project, from: 'project-details' } })
+                    }
+                  }}
+                >
+                  <div className="diagram-card-image-wrapper">
+                    <img
+                      src={diagram.image}
+                      alt={diagram.title}
+                      className="diagram-card-image"
+                    />
+                  </div>
+                  <div className="diagram-card-body">
+                    <h3>{diagram.title}</h3>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
       </main>

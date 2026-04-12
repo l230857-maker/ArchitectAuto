@@ -50,10 +50,15 @@ const diagramOptions = [
 function DiagramSelector() {
   const navigate = useNavigate()
   const location = useLocation()
-  const project = location.state
+  const project = location.state?.project ?? location.state
   const [selectedDiagram, setSelectedDiagram] = useState('')
 
   const handleSelectDiagram = (diagramId) => {
+    if (diagramId === 'class') {
+      navigate('/class-diagram', { state: { project, from: 'diagram-selector' } })
+      return
+    }
+
     setSelectedDiagram(diagramId)
   }
 
@@ -77,9 +82,9 @@ function DiagramSelector() {
             <button
               type="button"
               className="back-button"
-              onClick={() => navigate('/stack-selector')}
+              onClick={() => navigate('/dashboard')}
             >
-              ← Back to Stack Selector
+              ← Back to Dashboard
             </button>
             <div>
               <p className="diagram-selector-subtitle">Select Diagram Type</p>
