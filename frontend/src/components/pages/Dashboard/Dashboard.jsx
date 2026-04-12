@@ -44,7 +44,7 @@ function Dashboard() {
   ])
 
   const handleCreateProject = () => {
-    console.log('Create new project clicked')
+    navigate('/stack-selector')
   }
 
   const handleProjectClick = (projectId) => {
