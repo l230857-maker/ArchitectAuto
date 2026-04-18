@@ -1,22 +1,44 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './SignIn.css'
+import { postJson } from '../../../lib/api'
+import { saveAuthSession } from '../../../lib/auth'
 
 function SignIn() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('••••••••••••')
-  const [showPassword, setShowPassword] = useState(false)
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault()
-    console.log('Sign in clicked', { email, password })
-    // Navigate to dashboard after sign in
-    navigate('/dashboard')
-  }
+    setErrorMessage('')
 
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value)
+    if (!email || !password) {
+      setErrorMessage('Please enter your email and password')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const data = await postJson('/auth/signin', {
+        email,
+        password,
+      })
+
+      saveAuthSession({
+        user: data.user,
+        token: data.token,
+      })
+
+      navigate('/dashboard')
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -46,18 +68,20 @@ function SignIn() {
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <input
-                type={showPassword ? 'text' : 'password'}
+                type="password"
                 id="password"
                 className="form-input"
                 value={password}
-                onChange={handlePasswordChange}
-                placeholder="••••••••••••"
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
               />
             </div>
 
-            <button type="submit" className="signin-button">
-              SIGN IN
-              <span className="signin-arrow"> →</span>
+            {errorMessage && <p className="form-error">{errorMessage}</p>}
+
+            <button type="submit" className="signin-button" disabled={isSubmitting}>
+              {isSubmitting ? 'SIGNING IN...' : 'SIGN IN'}
+              <span className="signin-arrow"> -&gt;</span>
             </button>
           </form>
 

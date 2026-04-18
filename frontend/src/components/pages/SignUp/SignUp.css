@@ -95,6 +95,13 @@
   color: #c0c0c0;
 }
 
+.form-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* Sign Up Button */
 .signup-button {
   width: 100%;
@@ -123,6 +130,11 @@
 
 .signup-button:active {
   transform: translateY(0);
+}
+
+.signup-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 .signup-arrow {
