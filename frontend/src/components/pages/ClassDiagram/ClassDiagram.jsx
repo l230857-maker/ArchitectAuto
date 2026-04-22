@@ -1,15 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import ReactFlow, {
-  Background,
-  Controls,
-  Handle,
-  MiniMap,
-  Position,
-  useEdgesState,
-  useNodesState,
-} from 'reactflow'
-import 'reactflow/dist/style.css'
+import { Position, useEdgesState, useNodesState } from 'reactflow'
+import Canvas from '../../Canvas/Canvas'
 import './ClassDiagram.css'
 
 const initialNodes = [
@@ -30,67 +22,6 @@ const initialNodes = [
 ]
 
 const initialEdges = []
-
-function ClassNode({ data }) {
-  return (
-    <div className="class-node" style={{ width: data.width || 260, minHeight: data.height || 220 }}>
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-      <div className="class-node-header">{data.label || 'ClassName'}</div>
-      <div className="class-node-section">
-        {data.attributes && data.attributes.length
-          ? data.attributes.map((item, index) => (
-              <div key={index} className="class-node-line">
-                {item}
-              </div>
-            ))
-          : <div className="class-node-placeholder">Attributes</div>}
-      </div>
-      <div className="class-node-divider" />
-      <div className="class-node-section">
-        {data.methods && data.methods.length
-          ? data.methods.map((item, index) => (
-              <div key={index} className="class-node-line">
-                {item}
-              </div>
-            ))
-          : <div className="class-node-placeholder">Methods</div>}
-      </div>
-    </div>
-  )
-}
-
-function ShapeNode({ data }) {
-  const shapeType = data.shapeType || 'rectangle'
-  const baseStyle = {
-    width: data.width || 180,
-    height: data.height || 120,
-    border: '2px solid #1a1f3a',
-    background: shapeType === 'textbox' ? '#f9f9f9' : '#ffffff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    color: '#1a1f3a',
-    borderRadius: shapeType === 'circle' ? '999px' : shapeType === 'textbox' ? '12px' : '16px',
-    padding: '8px',
-    textAlign: 'center',
-    whiteSpace: 'pre-wrap',
-  }
-
-  return (
-    <div style={baseStyle}>
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-      {data.label}
-    </div>
-  )
-}
-
-const nodeTypes = {
-  classNode: ClassNode,
-  shapeNode: ShapeNode,
-}
 
 function ClassDiagram() {
   const navigate = useNavigate()
@@ -154,29 +85,6 @@ function ClassDiagram() {
     setRelationCardinality('one-to-one')
   }
 
-  const addShapeNode = (shapeType) => {
-    const id = `shape-${Date.now()}`
-    const position = { x: 200 + Math.random() * 200, y: 150 + Math.random() * 200 }
-
-    const newNode = {
-      id,
-      type: 'shapeNode',
-      position,
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-      data: {
-        label: shapeType === 'textbox' ? 'Text Label' : shapeType === 'circle' ? 'Circle' : 'Rectangle',
-        shapeType,
-        width: 180,
-        height: 120,
-      },
-      draggable: true,
-    }
-
-    setNodes((current) => [...current, newNode])
-    console.log('Added node:', newNode)
-  }
-
   const startCreateClass = () => {
     setMode('createClass')
     setSelectedNodeId(null)
@@ -200,12 +108,45 @@ function ClassDiagram() {
 
   const classNodes = useMemo(() => nodes.filter((node) => node.type === 'classNode'), [nodes])
 
-  const createClassBlock = () => {
-    if (!newClassName.trim()) {
-      setMessage('Class name is required to create a new class.')
+  const handleUpdateSelectedNode = () => {
+    if (!selectedNode) {
+      setMessage('Select a node to update.')
       return
     }
 
+    const attributeList = attributes
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const methodList = methods
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    if (!className.trim() || attributeList.length === 0) {
+      setMessage('Class name and attributes are required.')
+      return
+    }
+
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === selectedNodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                label: className.trim(),
+                attributes: attributeList,
+                methods: methodList,
+              },
+            }
+          : node,
+      ),
+    )
+    setMessage('Class updated successfully.')
+  }
+
+  const createClassBlock = () => {
     const attributeList = newClassAttributes
       .split('\n')
       .map((item) => item.trim())
@@ -214,6 +155,11 @@ function ClassDiagram() {
       .split('\n')
       .map((item) => item.trim())
       .filter(Boolean)
+
+    if (!newClassName.trim() || attributeList.length === 0) {
+      setMessage('Class name and attributes are required to create a new class.')
+      return
+    }
 
     const id = `class-${Date.now()}`
     const newNode = {
@@ -272,59 +218,6 @@ function ClassDiagram() {
     setRelationTarget('')
     setRelationLabel('association')
     setRelationCardinality('one-to-one')
-  }
-
-  const handleUpdateSelectedNode = () => {
-    if (!selectedNode) {
-      setMessage('Select a node to update.')
-      return
-    }
-
-    const attributeList = attributes
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-    const methodList = methods
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    setNodes((current) =>
-      current.map((node) =>
-        node.id === selectedNodeId
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                label: className.trim(),
-                ...(node.type === 'classNode'
-                  ? { attributes: attributeList, methods: methodList }
-                  : { width: Number(node.data.width || 180), height: Number(node.data.height || 120) }),
-              },
-            }
-          : node,
-      ),
-    )
-  }
-
-  const addLine = () => {
-    if (nodes.length < 2) {
-      setMessage('Add at least two nodes to draw a line between them.')
-      return
-    }
-
-    const sourceNode = nodes[nodes.length - 2]
-    const targetNode = nodes[nodes.length - 1]
-
-    const newEdge = {
-      id: `edge-${Date.now()}`,
-      source: sourceNode.id,
-      target: targetNode.id,
-      type: 'default',
-    }
-
-    setEdges((current) => [...current, newEdge])
-    setMessage('Added a simple connector line between the last two objects.')
   }
 
   const saveDiagram = async () => {
@@ -393,10 +286,58 @@ function ClassDiagram() {
     [nodes, selectedNodeId],
   )
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Delete' && selectedNodeId) {
+        deleteSelectedNode()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedNodeId, nodes, edges])
+
+  const deleteSelectedNode = () => {
+    if (!selectedNodeId) {
+      setMessage('Select a class to delete.')
+      return
+    }
+
+    // Remove the node
+    setNodes((current) => current.filter((node) => node.id !== selectedNodeId))
+
+    // Remove all edges connected to this node
+    setEdges((current) =>
+      current.filter((edge) => edge.source !== selectedNodeId && edge.target !== selectedNodeId),
+    )
+
+    // Clear selection
+    setSelectedNodeId(null)
+    setClassName('')
+    setAttributes('')
+    setMethods('')
+    setMessage('Class deleted successfully.')
+  }
+
   return (
     <div className="class-diagram-container">
       <header className="class-diagram-header">
-        <h1>ArchitectAuto UML to Code Generator</h1>
+        <div className="header-left">
+          <button
+            type="button"
+            className="header-back-btn"
+            onClick={() => navigate(backUrl, { state: { project, from } })}
+            title="Back"
+          >
+            ←
+          </button>
+          <h1>ArchitectAuto</h1>
+        </div>
+        <div className="header-center">
+          <span className="project-info"><strong>{project?.name || 'New Project'}</strong></span>
+          <span className="divider">•</span>
+          <span className="stack-info">{project?.stack?.toUpperCase() || 'N/A'}</span>
+        </div>
         <div className="class-diagram-header-actions">
           <button type="button" className="action-btn" onClick={saveDiagram}>
             Save
@@ -417,123 +358,78 @@ function ClassDiagram() {
       </header>
 
       <main className="class-diagram-main">
-        <aside className="tools-panel">
-          <h3>Tools</h3>
-          <button type="button" className="tool-btn" onClick={() => addShapeNode('rectangle')}>
-            Rectangle
-          </button>
-          <button type="button" className="tool-btn" onClick={() => addShapeNode('circle')}>
-            Circle
-          </button>
-          <button type="button" className="tool-btn" onClick={addLine}>
-            Line
-          </button>
-          <button type="button" className="tool-btn" onClick={() => addShapeNode('textbox')}>
-            Textbox
-          </button>
-          <div className="divider" />
-          <button
-            type="button"
-            className="tool-btn"
-            onClick={() => navigate(backUrl, { state: { project, from } })}
-          >
-            ← Back
-          </button>
-          <div className="project-meta">
-            <p><strong>Project:</strong> {project?.name || 'New Project'}</p>
-            <p><strong>Stack:</strong> {project?.stack?.toUpperCase() || 'N/A'}</p>
-          </div>
-        </aside>
-
-        <div className="canvas-panel">
-          <div className="canvas-controls">
-            <div className="debug-info">
-              Nodes: {nodes.length} | Edges: {edges.length}
-            </div>
-            <div className="zoom-controls">
-              <button type="button" className="zoom-btn" onClick={() => reactFlowInstance?.zoomIn()} title="Zoom In">
-                +
-              </button>
-              <button type="button" className="zoom-btn" onClick={() => reactFlowInstance?.zoomOut()} title="Zoom Out">
-                −
-              </button>
-              <button type="button" className="zoom-btn" onClick={() => reactFlowInstance?.fitView()} title="Fit View">
-                ⟲
-              </button>
-            </div>
-          </div>
-          <div className="reactflow-wrapper">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={handleNodeClick}
-              onPaneClick={() => {
-                setSelectedNodeId(null)
-                setClassName('')
-                setAttributes('')
-                setMethods('')
-                setMode('default')
-              }}
-              onInit={setReactFlowInstance}
-              nodeTypes={nodeTypes}
-              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-              minZoom={0.1}
-              maxZoom={2}
-              zoomOnScroll={true}
-              zoomOnPinch={true}
-              panOnDrag={true}
-              selectionOnDrag={false}
-            >
-              <Background gap={16} color="#dde1f2" />
-              <Controls />
-              <MiniMap nodeColor={(node) => (node.type === 'classNode' ? '#1a1f3a' : '#0077cc')} />
-            </ReactFlow>
-          </div>
-        </div>
+        <Canvas
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={handleNodeClick}
+          onPaneClick={() => {
+            setSelectedNodeId(null)
+            setClassName('')
+            setAttributes('')
+            setMethods('')
+            setMode('default')
+          }}
+          setReactFlowInstance={setReactFlowInstance}
+        />
 
         <aside className="properties-panel">
-          <h3>Class Diagram Builder</h3>
-          <div className="properties-upper">
-            <div className="panel-actions">
-              <button type="button" className="tool-btn" onClick={startCreateClass}>
+          <div className="properties-panel-header">
+            <h3>Class Diagram Builder</h3>
+            <div className="panel-mode-indicator">
+              <button
+                type="button"
+                className={`mode-pill ${mode === 'createClass' ? 'active' : ''}`}
+                onClick={startCreateClass}
+              >
+                <span className="panel-icon">➕</span>
                 Create Class
               </button>
-              <button type="button" className="tool-btn" onClick={startCreateRelation}>
+              <button
+                type="button"
+                className={`mode-pill ${mode === 'createRelation' ? 'active' : ''}`}
+                onClick={startCreateRelation}
+              >
+                <span className="panel-icon">⛓️</span>
                 Create Relation
               </button>
             </div>
+            {message && <div className="class-diagram-message">{message}</div>}
+          </div>
+          <div className="properties-upper">
 
             {mode === 'createClass' && (
               <div className="properties-subpanel">
                 <h4>New Class</h4>
                 <label>
-                  Class Name
+                  Class Name <span className="required-tag">*</span>
                   <input
                     type="text"
                     value={newClassName}
                     onChange={(event) => setNewClassName(event.target.value)}
                     placeholder="Order"
+                    required
                   />
                 </label>
                 <label>
-                  Attributes
+                  Attributes <span className="required-tag">*</span>
                   <textarea
-                    rows={4}
+                    rows={1}
                     value={newClassAttributes}
                     onChange={(event) => setNewClassAttributes(event.target.value)}
-                    placeholder="id: number\ncreatedAt: Date"
+                    placeholder="id: number"
+                    required
                   />
                 </label>
                 <label>
                   Methods
                   <textarea
-                    rows={4}
+                    rows={1}
                     value={newClassMethods}
                     onChange={(event) => setNewClassMethods(event.target.value)}
-                    placeholder="save()\nvalidate()"
+                    placeholder="save()"
                   />
                 </label>
                 <div className="panel-actions">
@@ -554,26 +450,30 @@ function ClassDiagram() {
                   Source Class
                   <select value={relationSource} onChange={(event) => setRelationSource(event.target.value)}>
                     <option value="">Select a class</option>
-                    {classNodes.map((node) => (
-                      <option key={node.id} value={node.id}>
-                        {node.data.label}
-                      </option>
-                    ))}
+                    {classNodes
+                      .filter((node) => node.id !== relationTarget)
+                      .map((node) => (
+                        <option key={node.id} value={node.id}>
+                          {node.data.label}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label>
                   Target Class
                   <select value={relationTarget} onChange={(event) => setRelationTarget(event.target.value)}>
                     <option value="">Select a class</option>
-                    {classNodes.map((node) => (
-                      <option key={node.id} value={node.id}>
-                        {node.data.label}
-                      </option>
-                    ))}
+                    {classNodes
+                      .filter((node) => node.id !== relationSource)
+                      .map((node) => (
+                        <option key={node.id} value={node.id}>
+                          {node.data.label}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label>
-                  Relation Type
+                  Relation Name
                   <input
                     type="text"
                     value={relationLabel}
@@ -605,111 +505,45 @@ function ClassDiagram() {
               <div className="properties-subpanel">
                 <h4>Edit Selected Class</h4>
                 <label>
-                  Class Name
+                  Class Name <span className="required-tag">*</span>
                   <input
                     type="text"
                     value={className}
                     onChange={(event) => setClassName(event.target.value)}
                     placeholder="ExampleClass"
+                    required
                   />
                 </label>
                 <label>
-                  Attributes
+                  Attributes <span className="required-tag">*</span>
                   <textarea
-                    rows={5}
+                    rows={2}
                     value={attributes}
                     onChange={(event) => setAttributes(event.target.value)}
-                    placeholder="id: string\nname: string"
+                    placeholder="id: string"
+                    required
                   />
                 </label>
                 <label>
                   Methods
                   <textarea
-                    rows={5}
+                    rows={2}
                     value={methods}
                     onChange={(event) => setMethods(event.target.value)}
-                    placeholder="create()\nupdate()"
+                    placeholder="create()"
                   />
                 </label>
                 <button type="button" className="create-update-btn" onClick={handleUpdateSelectedNode}>
                   Update Class
                 </button>
-              </div>
-            )}
-
-          </div>
-
-          <div className="properties-lower">
-            {selectedNode?.type === 'shapeNode' ? (
-              <div className="properties-subpanel">
-                <h4>Edit Selected Object</h4>
-                <label>
-                  Label
-                  <input
-                    type="text"
-                    value={className}
-                    onChange={(event) => setClassName(event.target.value)}
-                    placeholder="Text Label"
-                  />
-                </label>
-                <label>
-                  Width
-                  <input
-                    type="number"
-                    min="80"
-                    value={selectedNode?.data?.width ?? 180}
-                    onChange={(event) => {
-                      const value = Number(event.target.value || 180)
-                      setNodes((current) =>
-                        current.map((node) =>
-                          node.id === selectedNodeId
-                            ? {
-                                ...node,
-                                data: {
-                                  ...node.data,
-                                  width: value,
-                                },
-                              }
-                            : node,
-                        ),
-                      )
-                    }}
-                  />
-                </label>
-                <label>
-                  Height
-                  <input
-                    type="number"
-                    min="60"
-                    value={selectedNode?.data?.height ?? 120}
-                    onChange={(event) => {
-                      const value = Number(event.target.value || 120)
-                      setNodes((current) =>
-                        current.map((node) =>
-                          node.id === selectedNodeId
-                            ? {
-                                ...node,
-                                data: {
-                                  ...node.data,
-                                  height: value,
-                                },
-                              }
-                            : node,
-                        ),
-                      )
-                    }}
-                  />
-                </label>
-                <button type="button" className="create-update-btn" onClick={handleUpdateSelectedNode}>
-                  Update Object
+                <button type="button" className="delete-btn" onClick={deleteSelectedNode}>
+                  Delete Class
                 </button>
               </div>
-            ) : (
-              <div className="properties-empty" />
             )}
+
           </div>
 
-          {message && <div className="class-diagram-message">{message}</div>}
           <input ref={fileInputRef} type="file" accept=".svg" hidden onChange={handleImportFile} />
         </aside>
       </main>

@@ -1,0 +1,176 @@
+.canvas-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+  border-left: 1px solid #dde1f2;
+  border-right: 1px solid #dde1f2;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.canvas-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #dde1f2;
+  gap: 16px;
+}
+
+.debug-info {
+  font-size: 12px;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+}
+
+.zoom-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #dde1f2;
+  background: #ffffff;
+  color: #1a1f3a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-btn:hover {
+  background: #f3f4f6;
+  border-color: #0081f4;
+  color: #0081f4;
+  transform: scale(1.05);
+}
+
+.zoom-btn:active {
+  transform: scale(0.98);
+}
+
+.reactflow-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+.reactflow-wrapper .rf-background {
+  background-color: #f5f7fa;
+}
+
+.reactflow-wrapper .rf-controls {
+  margin-right: 12px;
+  margin-bottom: 12px;
+}
+
+/* Class Node Styling */
+.class-node {
+  background: #ffffff;
+  border: 2px solid #0081f4;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 240px;
+}
+
+.class-node-header {
+  background: #0081f4;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  margin: -12px -12px 8px -12px;
+  text-align: center;
+}
+
+.class-node-section {
+  min-height: 40px;
+  margin: 8px 0;
+  padding: 4px 0;
+}
+
+.class-node-line {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #1a1f3a;
+  font-family: 'Courier New', monospace;
+  border-bottom: 1px solid #eee;
+}
+
+.class-node-line:last-child {
+  border-bottom: none;
+}
+
+.class-node-placeholder {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.class-node-divider {
+  height: 1px;
+  background: #dde1f2;
+  margin: 8px 0;
+}
+
+/* Shape Node Styling */
+.shape-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 2px solid #1a1f3a;
+  color: #1a1f3a;
+  font-size: 14px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.shape-node:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ReactFlow Overrides */
+.reactflow-wrapper .rf-node {
+  user-select: none;
+}
+
+.reactflow-wrapper .rf-node.selected {
+  box-shadow: 0 0 0 3px rgba(0, 129, 244, 0.3);
+}
+
+.reactflow-wrapper .rf-edge {
+  stroke: #0081f4;
+  stroke-width: 2;
+}
+
+.reactflow-wrapper .rf-edge.selected {
+  stroke: #0052a3;
+  stroke-width: 2.5;
+}
+
+.reactflow-wrapper .rf-edge-label {
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #1a1f3a;
+  border: 1px solid #dde1f2;
+}
