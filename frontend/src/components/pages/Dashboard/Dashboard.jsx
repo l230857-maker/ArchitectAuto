@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
+import { clearAuthSession, getAuthSession } from '../../../lib/auth'
 
 function Dashboard() {
   const navigate = useNavigate()
+  const session = getAuthSession()
   const [projects] = useState([
     {
       id: 1,
@@ -52,6 +54,7 @@ function Dashboard() {
   }
 
   const handleLogout = () => {
+    clearAuthSession()
     navigate('/signin')
   }
 
@@ -64,24 +67,24 @@ function Dashboard() {
       <header className="dashboard-header">
         <h1 className="dashboard-title">ArchitectAuto UML to Code Generator</h1>
         <button className="profile-icon" onClick={handleProfileClick} title="Edit Profile">
-          👤
+          Profile
         </button>
       </header>
 
       <main className="dashboard-main">
         <div className="dashboard-content">
           <h2 className="dashboard-heading">Dashboard</h2>
+          <p className="dashboard-subtitle">
+            {session?.user?.email ? `Signed in as ${session.user.email}` : 'Manage your projects'}
+          </p>
 
-          {/* Manage Projects Section */}
           <section className="manage-section">
-            <h3 className="section-title">Manage Your Projects</h3>
             <button className="create-project-btn" onClick={handleCreateProject}>
               <span className="plus-icon">+</span>
               Create New Project
             </button>
           </section>
 
-          {/* Your Projects Section */}
           <section className="projects-section">
             <h3 className="section-title">Your Projects</h3>
             <div className="projects-grid">

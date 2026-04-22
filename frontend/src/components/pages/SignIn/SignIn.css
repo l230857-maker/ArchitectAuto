@@ -95,6 +95,13 @@
   color: #c0c0c0;
 }
 
+.form-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* Sign In Button */
 .signin-button {
   width: 100%;
@@ -123,6 +130,11 @@
 
 .signin-button:active {
   transform: translateY(0);
+}
+
+.signin-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 .signin-arrow {

@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './UserProfile.css'
+import { clearAuthSession, getAuthSession } from '../../../lib/auth'
 
 function UserProfile() {
   const navigate = useNavigate()
-  const [email] = useState('john.doe@gmail.com')
+  const session = getAuthSession()
+  const [email] = useState(session?.user?.email || 'No user signed in')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showNewPassword] = useState(false)
+  const [showConfirmPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
 
@@ -33,16 +35,10 @@ function UserProfile() {
       return
     }
 
-    // Success
-    setMessage('Password changed successfully!')
+    setMessage('Password change UI is ready. Backend update endpoint is not connected yet.')
     setMessageType('success')
     setNewPassword('')
     setConfirmPassword('')
-
-    // Redirect to dashboard after 2 seconds
-    setTimeout(() => {
-      navigate('/dashboard')
-    }, 2000)
   }
 
   const handleBackToDashboard = () => {
@@ -76,7 +72,7 @@ function UserProfile() {
                 className="form-input"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Enter a new password"
               />
             </div>
 
@@ -88,7 +84,7 @@ function UserProfile() {
                 className="form-input"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Confirm the new password"
               />
             </div>
 
@@ -101,7 +97,7 @@ function UserProfile() {
             <div className="button-group">
               <button type="submit" className="change-password-btn">
                 Change Password
-                <span className="btn-arrow"> →</span>
+                <span className="btn-arrow"> -&gt;</span>
               </button>
               <button
                 type="button"
@@ -113,7 +109,10 @@ function UserProfile() {
               <button
                 type="button"
                 className="logout-btn"
-                onClick={() => navigate('/signin')}
+                onClick={() => {
+                  clearAuthSession()
+                  navigate('/signin')
+                }}
               >
                 Logout
               </button>
