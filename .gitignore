@@ -25,6 +25,5 @@ dist-ssr
 
 
 frontend/src/assets/
-.env 
-backend/src/.env
+backend/.env 
 backend/node_modules.zip
