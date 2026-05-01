@@ -26,3 +26,4 @@ dist-ssr
 
 frontend/src/assets/
 .env 
+backend/node_modules.zip
