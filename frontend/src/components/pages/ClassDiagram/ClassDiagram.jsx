@@ -23,6 +23,33 @@ const initialNodes = [
 
 const initialEdges = []
 
+// Data type options for attributes
+const DATA_TYPES = [
+  'number',
+  'boolean',
+  'array',
+  'object',
+  'Date',
+]
+
+// Return type options for methods
+const RETURN_TYPES = [
+  'number',
+  'boolean',
+  'array',
+  'object',
+  'Date',
+]
+
+// Relationship type options
+const RELATIONSHIP_TYPES = [
+  'association',
+  'inheritance',
+  'composition',
+  'aggregation',
+  'dependency',
+]
+
 function ClassDiagram() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -46,6 +73,22 @@ function ClassDiagram() {
   const [relationTarget, setRelationTarget] = useState('')
   const [relationLabel, setRelationLabel] = useState('association')
   const [relationCardinality, setRelationCardinality] = useState('one-to-one')
+  
+  // New class creation - attribute management
+  const [newAttrName, setNewAttrName] = useState('')
+  const [newAttrType, setNewAttrType] = useState('')
+  const [newAttributesList, setNewAttributesList] = useState([])
+  const [newMethodName, setNewMethodName] = useState('')
+  const [newMethodReturn, setNewMethodReturn] = useState('')
+  const [newMethodsList, setNewMethodsList] = useState([])
+  
+  // Edit class - attribute management
+  const [editAttrName, setEditAttrName] = useState('')
+  const [editAttrType, setEditAttrType] = useState('')
+  const [editAttributesList, setEditAttributesList] = useState([])
+  const [editMethodName, setEditMethodName] = useState('')
+  const [editMethodReturn, setEditMethodReturn] = useState('')
+  const [editMethodsList, setEditMethodsList] = useState([])
 
   const onConnect = useCallback((params) => {
     const newEdge = {
@@ -66,9 +109,13 @@ function ClassDiagram() {
       if (node.type === 'classNode') {
         setAttributes((node.data.attributes || []).join('\n'))
         setMethods((node.data.methods || []).join('\n'))
+        setEditAttributesList(node.data.attributes || [])
+        setEditMethodsList(node.data.methods || [])
       } else {
         setAttributes('')
         setMethods('')
+        setEditAttributesList([])
+        setEditMethodsList([])
       }
       setMode('default')
     },
@@ -79,10 +126,76 @@ function ClassDiagram() {
     setNewClassName('')
     setNewClassAttributes('')
     setNewClassMethods('')
+    setNewAttrName('')
+    setNewAttrType('')
+    setNewAttributesList([])
+    setNewMethodName('')
+    setNewMethodReturn('')
+    setNewMethodsList([])
     setRelationSource('')
     setRelationTarget('')
     setRelationLabel('association')
     setRelationCardinality('one-to-one')
+  }
+
+  const addNewAttribute = () => {
+    if (!newAttrName.trim()) {
+      setMessage('Attribute name is required.')
+      return
+    }
+    const newAttr = `${newAttrName.trim()}${newAttrType.trim() ? ': ' + newAttrType.trim() : ''}`
+    setNewAttributesList((prev) => [...prev, newAttr])
+    setNewAttrName('')
+    setNewAttrType('')
+  }
+
+  const removeNewAttribute = (index) => {
+    setNewAttributesList((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const addNewMethod = () => {
+    if (!newMethodName.trim()) {
+      setMessage('Method name is required.')
+      return
+    }
+    const newMethod = `${newMethodName.trim()}${newMethodReturn.trim() ? ': ' + newMethodReturn.trim() : ''}`
+    setNewMethodsList((prev) => [...prev, newMethod])
+    setNewMethodName('')
+    setNewMethodReturn('')
+  }
+
+  const removeNewMethod = (index) => {
+    setNewMethodsList((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const addEditAttribute = () => {
+    if (!editAttrName.trim()) {
+      setMessage('Attribute name is required.')
+      return
+    }
+    const newAttr = `${editAttrName.trim()}${editAttrType.trim() ? ': ' + editAttrType.trim() : ''}`
+    setEditAttributesList((prev) => [...prev, newAttr])
+    setEditAttrName('')
+    setEditAttrType('')
+  }
+
+  const removeEditAttribute = (index) => {
+    setEditAttributesList((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const addEditMethod = () => {
+    if (!editMethodName.trim()) {
+      setMessage('Method name is required.')
+      return
+    }
+    const newMethod = `${editMethodName.trim()}${editMethodReturn.trim() ? ': ' + editMethodReturn.trim() : ''}`
+    setEditMethodsList((prev) => [...prev, newMethod])
+    setEditMethodName('')
+    setEditMethodReturn('')
+  }
+
+  const removeEditMethod = (index) => {
+    setEditMethodsList((prev) => prev.filter((_, i) => i !== index))
   }
 
   const startCreateClass = () => {
@@ -91,7 +204,14 @@ function ClassDiagram() {
     setClassName('')
     setAttributes('')
     setMethods('')
-    resetBuilderForms()
+    setNewClassName('')
+    setNewAttrName('')
+    setNewAttrType('')
+    setNewAttributesList([])
+    setNewMethodName('')
+    setNewMethodReturn('')
+    setNewMethodsList([])
+    setMessage('')
   }
 
   const startCreateRelation = () => {
@@ -114,16 +234,7 @@ function ClassDiagram() {
       return
     }
 
-    const attributeList = attributes
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-    const methodList = methods
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    if (!className.trim() || attributeList.length === 0) {
+    if (!className.trim() || editAttributesList.length === 0) {
       setMessage('Class name and attributes are required.')
       return
     }
@@ -136,8 +247,8 @@ function ClassDiagram() {
               data: {
                 ...node.data,
                 label: className.trim(),
-                attributes: attributeList,
-                methods: methodList,
+                attributes: editAttributesList,
+                methods: editMethodsList,
               },
             }
           : node,
@@ -147,17 +258,8 @@ function ClassDiagram() {
   }
 
   const createClassBlock = () => {
-    const attributeList = newClassAttributes
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-    const methodList = newClassMethods
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    if (!newClassName.trim() || attributeList.length === 0) {
-      setMessage('Class name and attributes are required to create a new class.')
+    if (!newClassName.trim() || newAttributesList.length === 0) {
+      setMessage('Class name and at least one attribute are required to create a new class.')
       return
     }
 
@@ -170,8 +272,8 @@ function ClassDiagram() {
       targetPosition: Position.Left,
       data: {
         label: newClassName.trim(),
-        attributes: attributeList,
-        methods: methodList,
+        attributes: newAttributesList,
+        methods: newMethodsList,
         width: 260,
         height: 220,
       },
@@ -180,8 +282,8 @@ function ClassDiagram() {
     setNodes((current) => [...current, newNode])
     setSelectedNodeId(id)
     setClassName(newClassName.trim())
-    setAttributes(attributeList.join('\n'))
-    setMethods(methodList.join('\n'))
+    setAttributes(newAttributesList.join('\n'))
+    setMethods(newMethodsList.join('\n'))
     setMessage('Created a new class block on the canvas.')
     setMode('default')
     resetBuilderForms()
@@ -413,25 +515,104 @@ function ClassDiagram() {
                     required
                   />
                 </label>
-                <label>
-                  Attributes <span className="required-tag">*</span>
-                  <textarea
-                    rows={1}
-                    value={newClassAttributes}
-                    onChange={(event) => setNewClassAttributes(event.target.value)}
-                    placeholder="id: number"
-                    required
-                  />
-                </label>
-                <label>
-                  Methods
-                  <textarea
-                    rows={1}
-                    value={newClassMethods}
-                    onChange={(event) => setNewClassMethods(event.target.value)}
-                    placeholder="save()"
-                  />
-                </label>
+
+                <div className="attributes-section">
+                  <label>Attributes <span className="required-tag">*</span></label>
+                  <div className="attribute-input-group">
+                    <input
+                      type="text"
+                      value={newAttrName}
+                      onChange={(event) => setNewAttrName(event.target.value)}
+                      placeholder="Attribute name"
+                      onKeyPress={(e) => e.key === 'Enter' && addNewAttribute()}
+                    />
+                    <select
+                      value={newAttrType}
+                      onChange={(event) => setNewAttrType(event.target.value)}
+                      className="type-select"
+                      title="Select data type"
+                    >
+                      <option value="">Select type</option>
+                      {DATA_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="add-btn"
+                      onClick={addNewAttribute}
+                      title="Add attribute"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="items-list">
+                    {newAttributesList.map((attr, index) => (
+                      <div key={index} className="item-tag">
+                        <span>{attr}</span>
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          onClick={() => removeNewAttribute(index)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methods-section">
+                  <label>Methods</label>
+                  <div className="attribute-input-group">
+                    <input
+                      type="text"
+                      value={newMethodName}
+                      onChange={(event) => setNewMethodName(event.target.value)}
+                      placeholder="Method name"
+                      onKeyPress={(e) => e.key === 'Enter' && addNewMethod()}
+                    />
+                    <select
+                      value={newMethodReturn}
+                      onChange={(event) => setNewMethodReturn(event.target.value)}
+                      title="Select return type"
+                    >
+                      <option value="">Select type</option>
+                      {RETURN_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="add-btn"
+                      onClick={addNewMethod}
+                      title="Add method"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="items-list">
+                    {newMethodsList.map((method, index) => (
+                      <div key={index} className="item-tag">
+                        <span>{method}</span>
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          onClick={() => removeNewMethod(index)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="panel-actions">
                   <button type="button" className="create-update-btn" onClick={createClassBlock}>
                     Add Class
@@ -474,12 +655,14 @@ function ClassDiagram() {
                 </label>
                 <label>
                   Relation Name
-                  <input
-                    type="text"
-                    value={relationLabel}
-                    onChange={(event) => setRelationLabel(event.target.value)}
-                    placeholder="association"
-                  />
+                  <select value={relationLabel} onChange={(event) => setRelationLabel(event.target.value)}>
+                    <option value="">Select relationship type</option>
+                    {RELATIONSHIP_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   Cardinality
@@ -514,25 +697,104 @@ function ClassDiagram() {
                     required
                   />
                 </label>
-                <label>
-                  Attributes <span className="required-tag">*</span>
-                  <textarea
-                    rows={2}
-                    value={attributes}
-                    onChange={(event) => setAttributes(event.target.value)}
-                    placeholder="id: string"
-                    required
-                  />
-                </label>
-                <label>
-                  Methods
-                  <textarea
-                    rows={2}
-                    value={methods}
-                    onChange={(event) => setMethods(event.target.value)}
-                    placeholder="create()"
-                  />
-                </label>
+
+                <div className="attributes-section">
+                  <label>Attributes <span className="required-tag">*</span></label>
+                  <div className="attribute-input-group">
+                    <input
+                      type="text"
+                      value={editAttrName}
+                      onChange={(event) => setEditAttrName(event.target.value)}
+                      placeholder="Attribute name"
+                      onKeyPress={(e) => e.key === 'Enter' && addEditAttribute()}
+                    />
+                    <select
+                      value={editAttrType}
+                      onChange={(event) => setEditAttrType(event.target.value)}
+                      className="type-select"
+                      title="Select data type"
+                    >
+                      <option value="">Select type</option>
+                      {DATA_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="add-btn"
+                      onClick={addEditAttribute}
+                      title="Add attribute"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="items-list">
+                    {editAttributesList.map((attr, index) => (
+                      <div key={index} className="item-tag">
+                        <span>{attr}</span>
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          onClick={() => removeEditAttribute(index)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methods-section">
+                  <label>Methods</label>
+                  <div className="attribute-input-group">
+                    <input
+                      type="text"
+                      value={editMethodName}
+                      onChange={(event) => setEditMethodName(event.target.value)}
+                      placeholder="Method name"
+                      onKeyPress={(e) => e.key === 'Enter' && addEditMethod()}
+                    />
+                    <select
+                      value={editMethodReturn}
+                      onChange={(event) => setEditMethodReturn(event.target.value)}
+                      title="Select return type"
+                    >
+                      <option value="">Select type</option>
+                      {RETURN_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="add-btn"
+                      onClick={addEditMethod}
+                      title="Add method"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="items-list">
+                    {editMethodsList.map((method, index) => (
+                      <div key={index} className="item-tag">
+                        <span>{method}</span>
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          onClick={() => removeEditMethod(index)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <button type="button" className="create-update-btn" onClick={handleUpdateSelectedNode}>
                   Update Class
                 </button>
