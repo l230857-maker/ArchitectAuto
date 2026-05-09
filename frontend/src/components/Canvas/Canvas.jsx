@@ -39,8 +39,10 @@ function ClassNode({ data }) {
   )
 }
 
-function ShapeNode({ data }) {
+function ShapeNode({ data, isConnectable, id, onUpdateNode }) {
   const shapeType = data.shapeType || 'rectangle'
+  
+  // Regular shape rendering for all types (rectangle, square, circle, textbox)
   const baseStyle = {
     width: data.width || 180,
     height: data.height || 120,
@@ -55,18 +57,19 @@ function ShapeNode({ data }) {
     padding: '8px',
     textAlign: 'center',
     whiteSpace: 'pre-wrap',
+    cursor: 'pointer',
   }
 
   return (
     <div style={baseStyle}>
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
       {data.label}
     </div>
   )
 }
 
-const nodeTypes = {
+const nodeTypesAtModule = {
   classNode: ClassNode,
   shapeNode: ShapeNode,
 }
@@ -78,8 +81,10 @@ function Canvas({
   onEdgesChange,
   onConnect,
   onNodeClick,
+  onEdgeClick,
   onPaneClick,
   setReactFlowInstance,
+  onUpdateNode,
 }) {
   const [flowInstance, setFlowInstance] = useState(null)
 
@@ -121,12 +126,13 @@ function Canvas({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           onInit={(instance) => {
             setFlowInstance(instance)
             setReactFlowInstance?.(instance)
           }}
-          nodeTypes={nodeTypes}
+          nodeTypes={nodeTypesAtModule}
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           minZoom={0.1}
           maxZoom={2}
@@ -134,6 +140,7 @@ function Canvas({
           zoomOnPinch={true}
           panOnDrag={true}
           selectionOnDrag={false}
+          deleteKeyCode={['Backspace', 'Delete']}
         >
           <Background gap={16} color="#dde1f2" />
         </ReactFlow>

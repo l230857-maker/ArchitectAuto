@@ -54,8 +54,8 @@ function ClassDiagram() {
   const navigate = useNavigate()
   const location = useLocation()
   const project = location.state?.project
+  const diagram = location.state?.diagram
   const from = location.state?.from || 'project-details'
-  const backUrl = from === 'diagram-selector' ? '/diagram-selector' : '/project-details'
   const fileInputRef = useRef(null)
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -89,6 +89,58 @@ function ClassDiagram() {
   const [editMethodName, setEditMethodName] = useState('')
   const [editMethodReturn, setEditMethodReturn] = useState('')
   const [editMethodsList, setEditMethodsList] = useState([])
+  const [enrichedProject, setEnrichedProject] = useState(project)
+
+  // Fetch full project data if stack_name is missing
+  useEffect(() => {
+    if (project && !project.stack_name && project.id) {
+      const fetchProjectData = async () => {
+        try {
+          const session = localStorage.getItem('architectauto-auth')
+          if (!session) return
+          const { token } = JSON.parse(session)
+          
+          const response = await fetch(`http://localhost:5000/api/projects/${project.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setEnrichedProject(data.data)
+          }
+        } catch (error) {
+          console.warn('Failed to fetch project data:', error)
+        }
+      }
+      
+      fetchProjectData()
+    } else if (project?.stack_name) {
+      // If project already has stack_name, use it directly
+      setEnrichedProject(project)
+    }
+  }, [project])
+
+  // Listen for Ctrl+S to save diagram
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        saveDiagram()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [nodes, edges, enrichedProject])
+
+  // Load diagram data from state when component mounts
+  useEffect(() => {
+    if (diagram?.visualLayout) {
+      console.log('📥 Loading saved class diagram:', diagram)
+      setNodes(diagram.visualLayout.nodes || [])
+      setEdges(diagram.visualLayout.edges || [])
+    }
+  }, [diagram, setNodes, setEdges])
 
   const onConnect = useCallback((params) => {
     const newEdge = {
@@ -322,20 +374,111 @@ function ClassDiagram() {
     setRelationCardinality('one-to-one')
   }
 
+  // Parse attributes and methods from string format (e.g., "name: string") to structured format
+  const parseAttributes = (attributesList) => {
+    return attributesList.map((attr) => {
+      const parts = attr.split(':').map((p) => p.trim())
+      return {
+        name: parts[0],
+        type: parts[1] || 'string',
+      }
+    })
+  }
+
+  const parseMethods = (methodsList) => {
+    return methodsList.map((method) => {
+      const parts = method.split(':').map((p) => p.trim())
+      return {
+        name: parts[0],
+        returnType: parts[1] || 'void',
+        parameters: [],
+      }
+    })
+  }
+
+  // Build structured UML from nodes and edges
+  const buildStructuredUML = () => {
+    const classes = nodes
+      .filter((node) => node.type === 'classNode')
+      .map((node) => ({
+        id: node.id,
+        name: node.data.label,
+        attributes: parseAttributes(node.data.attributes || []),
+        methods: parseMethods(node.data.methods || []),
+      }))
+
+    const relationships = edges.map((edge) => ({
+      from: edge.source,
+      to: edge.target,
+      type: extractRelationshipType(edge.label),
+    }))
+
+    return { classes, relationships }
+  }
+
+  const extractRelationshipType = (label) => {
+    if (!label) return 'association'
+    const types = ['association', 'inheritance', 'composition', 'aggregation', 'dependency']
+    for (const type of types) {
+      if (label.toLowerCase().includes(type)) {
+        return type
+      }
+    }
+    return 'association'
+  }
+
   const saveDiagram = async () => {
-    const diagramBody = { project: project?.name || 'Unnamed', nodes, edges, timestamp: Date.now() }
-    localStorage.setItem('classDiagramDraft', JSON.stringify(diagramBody))
-    setMessage('Diagram saved locally. Backend save should be implemented separately.')
+    if (!project?.id) {
+      setMessage('Project not found. Please return to project details.')
+      return
+    }
 
     try {
-      await fetch('/api/diagrams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(diagramBody),
-      })
-      setMessage('Save request sent to backend.')
+      setMessage('Saving diagram...')
+
+      const session = JSON.parse(localStorage.getItem('architectauto-auth') || '{}')
+      const token = session.token
+
+      if (!token) {
+        setMessage('Authentication required. Please login again.')
+        navigate('/signin')
+        return
+      }
+
+      // Build the save payload
+      const visualLayout = { nodes, edges }
+      const structuredUML = buildStructuredUML()
+
+      const payload = {
+        name: diagram?.name || project.name,
+        visualLayout,
+        structuredUML,
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${project.id}/class-diagrams/${location.state?.diagram?.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.message || 'Failed to save diagram')
+        return
+      }
+
+      setMessage('✓ Diagram saved successfully!')
+      setTimeout(() => setMessage(''), 3000)
     } catch (error) {
-      console.warn('Backend save unavailable:', error)
+      console.error('Error saving diagram:', error)
+      setMessage('An error occurred while saving the diagram')
     }
   }
 
@@ -356,30 +499,397 @@ function ClassDiagram() {
     }
   }
 
-  const exportDiagram = () => {
-    const diagramJson = JSON.stringify({ nodes, edges }, null, 2)
-    const blob = new Blob([diagramJson], { type: 'application/json' })
+  const exportDiagram = async () => {
+    setMessage('Preparing export options...')
+    
+    // Create a simple dialog for export format selection
+    const format = prompt('Export format? (svg/png/pdf)', 'svg')?.toLowerCase()
+    
+    if (!format || !['svg', 'png', 'pdf'].includes(format)) {
+      setMessage('Export cancelled or invalid format.')
+      return
+    }
+
+    try {
+      if (format === 'svg') {
+        exportAsSVG()
+      } else if (format === 'png') {
+        await exportAsPNG()
+      } else if (format === 'pdf') {
+        await exportAsPDF()
+      }
+    } catch (error) {
+      console.error('Export error:', error)
+      setMessage('Failed to export diagram')
+    }
+  }
+
+  const generateSVGContent = () => {
+    // Calculate bounding box of all nodes
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+    nodes.forEach((node) => {
+      if (node.type === 'classNode') {
+        const x = node.position.x
+        const y = node.position.y
+        const width = node.data.width || 260
+        const height = node.data.height || 220
+
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x + width)
+        maxY = Math.max(maxY, y + height)
+      }
+    })
+
+    // Add padding
+    const padding = 40
+    minX -= padding
+    minY -= padding
+    maxX += padding
+    maxY += padding
+
+    const viewWidth = maxX - minX
+    const viewHeight = maxY - minY
+
+    // Create SVG with dynamic viewBox
+    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${viewWidth} ${viewHeight}" width="${viewWidth}" height="${viewHeight}">
+      <defs>
+        <style>
+          .class-node { fill: white; stroke: #0066cc; stroke-width: 2; }
+          .class-header { fill: #0066cc; }
+          .class-title { font-size: 14px; font-weight: bold; fill: white; font-family: Arial, sans-serif; }
+          .class-attribute { font-size: 12px; fill: black; font-family: monospace; }
+          .divider-line { stroke: #0066cc; stroke-width: 1; }
+          .edge-line { stroke: #666; stroke-width: 2; fill: none; }
+          .edge-label { font-size: 11px; fill: #666; font-family: Arial, sans-serif; }
+        </style>
+      </defs>
+      <rect x="${minX}" y="${minY}" width="${viewWidth}" height="${viewHeight}" fill="#fafafa"/>`
+
+    // Add nodes (classes)
+    nodes.forEach((node) => {
+      if (node.type === 'classNode') {
+        const x = node.position.x
+        const y = node.position.y
+        const width = node.data.width || 260
+        const height = node.data.height || 220
+
+        // Main rectangle
+        svgContent += `<rect x="${x}" y="${y}" width="${width}" height="${height}" class="class-node" rx="4"/>`
+
+        // Header background
+        const headerHeight = 35
+        svgContent += `<rect x="${x}" y="${y}" width="${width}" height="${headerHeight}" class="class-header" rx="4"/>`
+
+        // Title
+        svgContent += `<text x="${x + 10}" y="${y + 23}" class="class-title">${escapeXml(node.data.label)}</text>`
+
+        // Divider line after title
+        svgContent += `<line x1="${x}" x2="${x + width}" y1="${y + headerHeight}" y2="${y + headerHeight}" class="divider-line"/>`
+
+        // Attributes
+        let attrY = y + headerHeight + 18
+        ;(node.data.attributes || []).forEach((attr) => {
+          svgContent += `<text x="${x + 10}" y="${attrY}" class="class-attribute">${escapeXml(attr)}</text>`
+          attrY += 18
+        })
+
+        // Divider line before methods
+        svgContent += `<line x1="${x}" x2="${x + width}" y1="${attrY}" y2="${attrY}" class="divider-line"/>`
+
+        // Methods
+        let methodY = attrY + 15
+        ;(node.data.methods || []).forEach((method) => {
+          svgContent += `<text x="${x + 10}" y="${methodY}" class="class-attribute">${escapeXml(method)}</text>`
+          methodY += 18
+        })
+      }
+    })
+
+    // Add edges (relationships) with arrow markers
+    svgContent += `<defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+      </marker>
+    </defs>`
+
+    edges.forEach((edge) => {
+      const sourceNode = nodes.find((n) => n.id === edge.source)
+      const targetNode = nodes.find((n) => n.id === edge.target)
+
+      if (sourceNode && targetNode && sourceNode.type === 'classNode' && targetNode.type === 'classNode') {
+        const sx = sourceNode.position.x
+        const sy = sourceNode.position.y
+        const sw = sourceNode.data.width || 260
+        const sh = sourceNode.data.height || 220
+
+        const tx = targetNode.position.x
+        const ty = targetNode.position.y
+        const tw = targetNode.data.width || 260
+        const th = targetNode.data.height || 220
+
+        // Calculate connection points on the edges of rectangles
+        const sourceCenter = { x: sx + sw / 2, y: sy + sh / 2 }
+        const targetCenter = { x: tx + tw / 2, y: ty + th / 2 }
+
+        // Determine which edge of the source box the line exits from
+        let x1 = sx + sw / 2
+        let y1 = sy + sh / 2
+
+        // Determine which edge of the target box the line enters
+        let x2 = tx + tw / 2
+        let y2 = ty + th / 2
+
+        // Calculate proper connection points
+        const dx = targetCenter.x - sourceCenter.x
+        const dy = targetCenter.y - sourceCenter.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        if (dist > 0) {
+          const angle = Math.atan2(dy, dx)
+          const cos = Math.cos(angle)
+          const sin = Math.sin(angle)
+
+          // Exit point from source (right edge if moving right, etc)
+          if (Math.abs(cos) > Math.abs(sin)) {
+            x1 = cos > 0 ? sx + sw : sx
+          } else {
+            y1 = sin > 0 ? sy + sh : sy
+          }
+
+          // Entry point to target
+          if (Math.abs(cos) > Math.abs(sin)) {
+            x2 = cos > 0 ? tx : tx + tw
+          } else {
+            y2 = sin > 0 ? ty : ty + th
+          }
+        }
+
+        svgContent += `<path d="M ${x1} ${y1} L ${x2} ${y2}" class="edge-line" marker-end="url(#arrowhead)"/>`
+
+        if (edge.label) {
+          const midX = (x1 + x2) / 2
+          const midY = (y1 + y2) / 2
+          svgContent += `<text x="${midX}" y="${midY - 5}" class="edge-label" text-anchor="middle">${escapeXml(edge.label)}</text>`
+        }
+      }
+    })
+
+    svgContent += '</svg>'
+    return svgContent
+  }
+
+  const exportAsSVG = () => {
+    const svgContent = generateSVGContent()
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'class-diagram.json'
+    link.download = `${enrichedProject?.name || 'class-diagram'}.svg`
     link.click()
     URL.revokeObjectURL(url)
-    setMessage('Diagram exported as JSON. Backend export to SVG/PDF should be handled by a server.')
+    setMessage('✓ Diagram exported as SVG')
+    setTimeout(() => setMessage(''), 3000)
+  }
+
+  const escapeXml = (str) => {
+    if (!str) return ''
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
+  }
+
+  const svgToPNG = async (svgContent, filename) => {
+    try {
+      // Create a temporary image element
+      const img = new Image()
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' })
+      const svgUrl = URL.createObjectURL(svgBlob)
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = svgUrl
+      })
+
+      // Get SVG dimensions from viewBox
+      const svgElement = new DOMParser().parseFromString(svgContent, 'text/xml').documentElement
+      const viewBox = svgElement.getAttribute('viewBox')
+      const [, , viewWidth, viewHeight] = viewBox.split(' ').map(Number)
+
+      // Create canvas with appropriate size (3x for quality)
+      const scale = 3
+      const canvas = document.createElement('canvas')
+      canvas.width = viewWidth * scale
+      canvas.height = viewHeight * scale
+
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#fafafa'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.scale(scale, scale)
+      ctx.drawImage(img, 0, 0)
+
+      // Download PNG
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        link.click()
+        URL.revokeObjectURL(url)
+        setMessage('✓ Diagram exported as PNG')
+        setTimeout(() => setMessage(''), 3000)
+      })
+
+      URL.revokeObjectURL(svgUrl)
+    } catch (error) {
+      console.error('PNG conversion error:', error)
+      setMessage('Failed to export as PNG.')
+    }
+  }
+
+  const exportAsPNG = async () => {
+    try {
+      setMessage('Exporting as PNG...')
+      const svgContent = generateSVGContent()
+      await svgToPNG(svgContent, `${enrichedProject?.name || 'class-diagram'}.png`)
+    } catch (error) {
+      console.error('PNG export error:', error)
+      setMessage('Failed to export as PNG.')
+    }
+  }
+
+  const exportAsPDF = async () => {
+    try {
+      setMessage('Exporting as PDF...')
+      const jsPDF = (await import('jspdf')).jsPDF
+      const svgContent = generateSVGContent()
+
+      // Parse SVG to get dimensions
+      const svgElement = new DOMParser().parseFromString(svgContent, 'text/xml').documentElement
+      const viewBox = svgElement.getAttribute('viewBox')
+      const [, , viewWidth, viewHeight] = viewBox.split(' ').map(Number)
+
+      // Create a temporary image from SVG
+      const img = new Image()
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' })
+      const svgUrl = URL.createObjectURL(svgBlob)
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = svgUrl
+      })
+
+      // Create canvas to render SVG
+      const canvas = document.createElement('canvas')
+      canvas.width = viewWidth * 2
+      canvas.height = viewHeight * 2
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#fafafa'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.scale(2, 2)
+      ctx.drawImage(img, 0, 0)
+
+      const imgData = canvas.toDataURL('image/png')
+
+      // Calculate PDF dimensions
+      const pdfWidth = 210 // A4 width in mm
+      const pdfHeight = (viewHeight * pdfWidth) / viewWidth
+      const pageHeight = 297 // A4 height in mm
+
+      let heightLeft = pdfHeight
+      let position = 0
+
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      // Add image(s) to PDF, handling multi-page diagrams
+      while (heightLeft > 0) {
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight)
+        heightLeft -= pageHeight
+        if (heightLeft > 0) {
+          pdf.addPage()
+          position = heightLeft - pdfHeight
+        }
+      }
+
+      pdf.save(`${enrichedProject?.name || 'class-diagram'}.pdf`)
+      URL.revokeObjectURL(svgUrl)
+      setMessage('✓ Diagram exported as PDF')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error) {
+      console.error('PDF export error:', error)
+      setMessage('Failed to export as PDF.')
+    }
   }
 
   const generateCode = async () => {
-    setMessage('Requesting code generation...')
+    setMessage('Generating code...')
     try {
-      await fetch('/api/generate-code', {
+      console.log('Diagram object:', diagram)
+      
+      if (!diagram) {
+        setMessage('No diagram found. Please save the diagram first.')
+        return
+      }
+
+      // Try different possible ID field names
+      const diagramId = diagram._id || diagram.id
+      
+      if (!diagramId) {
+        console.error('Diagram object keys:', Object.keys(diagram))
+        setMessage('Diagram ID not found. Please refresh and try again.')
+        return
+      }
+
+      const session = localStorage.getItem('architectauto-auth')
+      if (!session) {
+        setMessage('Authentication required. Please login again.')
+        return
+      }
+
+      const { token } = JSON.parse(session)
+
+      const response = await fetch(`http://localhost:5000/api/projects/generate/${diagramId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project: project?.name, nodes, edges }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       })
-      setMessage('Generate code request sent. Backend implementation required.')
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        try {
+          const error = JSON.parse(errorText)
+          setMessage(`Code generation failed: ${error.message}`)
+        } catch {
+          setMessage(`Code generation failed with status ${response.status}`)
+        }
+        return
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'generated-code.zip'
+      link.click()
+      URL.revokeObjectURL(url)
+
+      setMessage('✓ Code generated and downloaded successfully')
+      setTimeout(() => setMessage(''), 3000)
     } catch (error) {
-      setMessage('Code generation needs backend support.')
-      console.warn(error)
+      setMessage('Code generation failed.')
+      console.error('Code generation error:', error)
     }
   }
 
@@ -428,7 +938,7 @@ function ClassDiagram() {
           <button
             type="button"
             className="header-back-btn"
-            onClick={() => navigate(backUrl, { state: { project, from } })}
+            onClick={() => navigate('/dashboard')}
             title="Back"
           >
             ←
@@ -436,9 +946,9 @@ function ClassDiagram() {
           <h1>ArchitectAuto</h1>
         </div>
         <div className="header-center">
-          <span className="project-info"><strong>{project?.name || 'New Project'}</strong></span>
+          <span className="project-info"><strong>{enrichedProject?.name || 'New Project'}</strong></span>
           <span className="divider">•</span>
-          <span className="stack-info">{project?.stack?.toUpperCase() || 'N/A'}</span>
+          <span className="stack-info">{enrichedProject?.stack_name?.toUpperCase() || 'N/A'}</span>
         </div>
         <div className="class-diagram-header-actions">
           <button type="button" className="action-btn" onClick={saveDiagram}>
@@ -450,9 +960,11 @@ function ClassDiagram() {
           <button type="button" className="action-btn" onClick={exportDiagram}>
             Export
           </button>
-          <button type="button" className="action-btn generate-btn" onClick={generateCode}>
-            Generate Code
-          </button>
+          {enrichedProject?.stack_name?.toLowerCase() === 'mern' && (
+            <button type="button" className="action-btn generate-btn" onClick={generateCode}>
+              Generate Code
+            </button>
+          )}
           <button type="button" className="profile-icon" onClick={() => navigate('/profile')} title="Profile">
             👤
           </button>
