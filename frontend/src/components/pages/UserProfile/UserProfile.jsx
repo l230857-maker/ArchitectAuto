@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './UserProfile.css'
 import { clearAuthSession, getAuthSession } from '../../../lib/auth'
+import { API_BASE_URL } from '../../../lib/api'
 
 function UserProfile() {
   const navigate = useNavigate()
@@ -49,7 +50,7 @@ function UserProfile() {
         return
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/change-password', {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ function UserProfile() {
         return
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/delete-account', {
+      const response = await fetch(`${API_BASE_URL}/auth/delete-account`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 import { clearAuthSession, getAuthSession } from '../../../lib/auth'
+import { API_BASE_URL } from '../../../lib/api'
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -28,7 +29,7 @@ function Dashboard() {
           return
         }
 
-        const response = await fetch('http://localhost:5000/api/projects/my-projects', {
+        const response = await fetch(`${API_BASE_URL}/projects/my-projects`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -91,7 +92,7 @@ function Dashboard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/${projectToDelete.id}`,
+        `${API_BASE_URL}/projects/${projectToDelete.id}`,
         {
           method: 'DELETE',
           headers: {

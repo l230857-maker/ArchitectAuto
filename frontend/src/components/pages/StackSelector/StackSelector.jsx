@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './StackSelector.css'
+import { API_BASE_URL } from '../../../lib/api'
 
 const mernImage = new URL('../../../assets/StackSelector-images/MernStack.png', import.meta.url).href
 const pernImage = new URL('../../../assets/StackSelector-images/Pern.jpg', import.meta.url).href
@@ -85,7 +86,7 @@ function StackSelector() {
         return
       }
 
-      const response = await fetch('http://localhost:5000/api/projects', {
+      const response = await fetch(`${API_BASE_URL}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

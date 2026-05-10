@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useEdgesState, useNodesState } from 'reactflow'
 import Canvas from '../../Canvas/Canvas'
 import './OtherDiagram.css'
+import { API_BASE_URL } from '../../../lib/api'
 
 const initialNodes = []
 const initialEdges = []
@@ -92,7 +93,7 @@ function OtherDiagram() {
           if (!session) return
           const { token } = JSON.parse(session)
           
-          const response = await fetch(`http://localhost:5000/api/projects/${project.id}`, {
+          const response = await fetch(`${API_BASE_URL}/projects/${project.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           
@@ -350,7 +351,7 @@ function OtherDiagram() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/${project.id}/other-diagrams/${diagram?.id || ''}`,
+        `${API_BASE_URL}/projects/${project.id}/other-diagrams/${diagram?.id || ''}`,
         {
           method: diagram?.id ? 'PUT' : 'POST',
           headers: {

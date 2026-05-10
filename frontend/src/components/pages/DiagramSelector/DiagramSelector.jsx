@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './DiagramSelector.css'
 import { getAuthSession } from '../../../lib/auth'
+import { API_BASE_URL } from '../../../lib/api'
 import classDiagramImage from '../../../assets/DiagramSelector-images/ClassDiagram.webp'
 import activityDiagramImage from '../../../assets/DiagramSelector-images/Activity diagram.png'
 import sequenceDiagramImage from '../../../assets/DiagramSelector-images/SequenceDiagram.png'
@@ -71,7 +72,7 @@ function DiagramSelector() {
             return
           }
 
-          const response = await fetch(`http://localhost:5000/api/projects/${project.id}/diagrams`, {
+          const response = await fetch(`${API_BASE_URL}/projects/${project.id}/diagrams`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -117,10 +118,10 @@ function DiagramSelector() {
       let body
 
       if (selectedDiagramType === 'class') {
-        endpoint = `http://localhost:5000/api/projects/${project.id}/class-diagrams`
+        endpoint = `${API_BASE_URL}/projects/${project.id}/class-diagrams`
         body = { name: diagramName.trim() }
       } else {
-        endpoint = `http://localhost:5000/api/projects/${project.id}/other-diagrams`
+        endpoint = `${API_BASE_URL}/projects/${project.id}/other-diagrams`
         body = { name: diagramName.trim(), type: selectedDiagramType }
       }
 

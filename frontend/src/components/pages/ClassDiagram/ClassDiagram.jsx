@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Position, useEdgesState, useNodesState } from 'reactflow'
 import Canvas from '../../Canvas/Canvas'
 import './ClassDiagram.css'
+import { API_BASE_URL } from '../../../lib/api'
 
 const initialNodes = [
   {
@@ -100,7 +101,7 @@ function ClassDiagram() {
           if (!session) return
           const { token } = JSON.parse(session)
           
-          const response = await fetch(`http://localhost:5000/api/projects/${project.id}`, {
+          const response = await fetch(`${API_BASE_URL}/projects/${project.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           
@@ -456,7 +457,7 @@ function ClassDiagram() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/${project.id}/class-diagrams/${location.state?.diagram?.id}`,
+        `${API_BASE_URL}/projects/${project.id}/class-diagrams/${location.state?.diagram?.id}`,
         {
           method: 'PUT',
           headers: {
@@ -858,7 +859,7 @@ function ClassDiagram() {
 
       const { token } = JSON.parse(session)
 
-      const response = await fetch(`http://localhost:5000/api/projects/generate/${diagramId}`, {
+      const response = await fetch(`${API_BASE_URL}/projects/generate/${diagramId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import './ProjectDetails.css'
 import { getAuthSession } from '../../../lib/auth'
+import { API_BASE_URL } from '../../../lib/api'
 import classDiagramImage from '../../../assets/DiagramSelector-images/ClassDiagram.webp'
 import activityDiagramImage from '../../../assets/DiagramSelector-images/Activity diagram.png'
 import sequenceDiagramImage from '../../../assets/DiagramSelector-images/SequenceDiagram.png'
@@ -42,7 +43,7 @@ function ProjectDetails() {
     if (project && !project.stack_name && project.id && session?.token) {
       const fetchProjectData = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/projects/${project.id}`, {
+          const response = await fetch(`${API_BASE_URL}/projects/${project.id}`, {
             headers: { Authorization: `Bearer ${session.token}` },
           })
           
@@ -79,7 +80,7 @@ function ProjectDetails() {
           return
         }
 
-        const response = await fetch(`http://localhost:5000/api/projects/${project.id}/diagrams`, {
+        const response = await fetch(`${API_BASE_URL}/projects/${project.id}/diagrams`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -132,7 +133,7 @@ function ProjectDetails() {
       setDeleteProjectError('')
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/${project.id}`,
+        `${API_BASE_URL}/projects/${project.id}`,
         {
           method: 'DELETE',
           headers: {
@@ -184,8 +185,8 @@ function ProjectDetails() {
       setDeleteDiagramError('')
 
       const endpoint = diagramToDelete.type === 'class'
-        ? `http://localhost:5000/api/projects/${project.id}/class-diagrams/${diagramToDelete.id}`
-        : `http://localhost:5000/api/projects/${project.id}/other-diagrams/${diagramToDelete.id}`
+        ? `${API_BASE_URL}/projects/${project.id}/class-diagrams/${diagramToDelete.id}`
+        : `${API_BASE_URL}/projects/${project.id}/other-diagrams/${diagramToDelete.id}`
 
       const response = await fetch(
         endpoint,
