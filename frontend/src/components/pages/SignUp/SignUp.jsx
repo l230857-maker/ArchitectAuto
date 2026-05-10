@@ -1,28 +1,51 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './SignUp.css'
+import { postJson } from '../../../lib/api'
+import { saveAuthSession } from '../../../lib/auth'
 
 function SignUp() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('test1@gmail.com')
-  const [password, setPassword] = useState('••••••••••••')
-  const [confirmPassword, setConfirmPassword] = useState('••••••••••••')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault()
-    console.log('Sign up clicked', { email, password, confirmPassword })
-    // Navigate to dashboard after sign up
-    navigate('/dashboard')
-  }
+    setErrorMessage('')
 
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value)
-  }
+    if (!email || !password || !confirmPassword) {
+      setErrorMessage('Please fill in all fields')
+      return
+    }
 
-  const handleConfirmPasswordChange = (e) => {
-    setConfirmPassword(e.target.value)
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const data = await postJson('/auth/signup', {
+        email,
+        password,
+        confirmPassword,
+      })
+
+      saveAuthSession({
+        user: data.user,
+        token: data.token,
+      })
+
+      navigate('/dashboard')
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -52,30 +75,32 @@ function SignUp() {
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <input
-                type={showPassword ? 'text' : 'password'}
+                type="password"
                 id="password"
                 className="form-input"
                 value={password}
-                onChange={handlePasswordChange}
-                placeholder="••••••••••••"
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
               />
             </div>
 
             <div className="form-group">
               <label htmlFor="confirm-password">Confirm Password</label>
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type="password"
                 id="confirm-password"
                 className="form-input"
                 value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                placeholder="••••••••••••"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
               />
             </div>
 
-            <button type="submit" className="signup-button">
-              SIGN UP
-              <span className="signup-arrow"> →</span>
+            {errorMessage && <p className="form-error">{errorMessage}</p>}
+
+            <button type="submit" className="signup-button" disabled={isSubmitting}>
+              {isSubmitting ? 'CREATING ACCOUNT...' : 'SIGN UP'}
+              <span className="signup-arrow"> -&gt;</span>
             </button>
           </form>
 

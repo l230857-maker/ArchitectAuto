@@ -1,3 +1,26 @@
+.error-message {
+  background-color: #fee;
+  color: #c33;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c33;
+}
+
+.loading-text,
+.no-diagrams-text {
+  font-size: 16px;
+  color: #666;
+  text-align: center;
+  padding: 40px 20px;
+  grid-column: 1 / -1;
+}
+
+.diagram-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .project-details-container {
   display: flex;
   flex-direction: column;
@@ -8,7 +31,7 @@
 .project-details-header {
   background-color: #1a1f3a;
   color: white;
-  padding: 16px 32px;
+  padding: 10px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,16 +41,16 @@
 
 .project-details-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
 
 .project-details-main {
   flex: 1;
-  padding: 40px 32px;
+  padding: 20px 20px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
 }
 
@@ -38,24 +61,24 @@
   border: 3px solid #1a1a1a;
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  padding: 36px;
+  padding: 20px;
 }
 
 .project-details-intro {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .back-button {
   align-self: flex-start;
-  padding: 12px 18px;
+  padding: 8px 12px;
   background-color: transparent;
   color: #1a1a1a;
   border: 2px solid #1a1a1a;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
@@ -69,31 +92,36 @@
   margin: 0;
   color: #7a7a7a;
   text-transform: uppercase;
-  font-size: 14px;
+  font-size: 12px;
   letter-spacing: 0.15em;
+  text-align: left;
 }
 
 .project-details-title {
   margin: 0;
-  font-size: 36px;
+  font-size: 24px;
   font-weight: 700;
   color: #1a1a1a;
+  text-align: left;
 }
 
 .project-details-description {
   margin: 0;
   color: #4d4d4d;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1.6;
+  text-align: left;
 }
 
 .project-summary-box {
-  margin-bottom: 28px;
-  padding: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
   background-color: #f5f5ff;
   border: 1px solid #d7d7ff;
   border-radius: 16px;
   color: #333;
+  font-size: 13px;
+  text-align: left;
 }
 
 .project-summary-box.no-project {
@@ -104,8 +132,14 @@
 
 .diagram-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 28px;
+  max-width: 100%;
+  justify-items: start;
+}
+
+.diagram-card-wrapper {
+  position: relative;
 }
 
 .diagram-card {
@@ -113,16 +147,54 @@
   border: 2px solid transparent;
   border-radius: 20px;
   padding: 0;
-  min-height: 380px;
+  min-height: 280px;
   text-align: left;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+  max-width: 260px;
+  text-decoration: none;
+}
+
+.diagram-card.clickable {
+  cursor: pointer;
+}
+
+.diagram-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.diagram-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  z-index: 10;
+}
+
+.diagram-card-wrapper:hover .diagram-delete-btn {
+  opacity: 1;
+}
+
+.diagram-delete-btn:hover {
+  transform: scale(1.2);
+}
+
+.diagram-delete-btn:active {
+  transform: scale(0.95);
 }
 
 .diagram-card-image-wrapper {
   width: 100%;
-  min-height: 220px;
+  min-height: 160px;
   overflow: hidden;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
@@ -139,27 +211,180 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
-}
-
-.diagram-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  padding: 12px;
 }
 
 .diagram-card-body h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
   color: #1a1a1a;
+}
+
+.create-diagram-section {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.create-diagram-btn,
+.delete-project-btn {
+  padding: 10px 20px;
+  color: white;
+  border: 2px solid;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.create-diagram-btn {
+  background-color: #1a1f3a;
+  border-color: #1a1f3a;
+}
+
+.create-diagram-btn:hover {
+  background-color: #2d2f4a;
+  transform: translateY(-2px);
+}
+
+.delete-project-btn {
+  background-color: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.delete-project-btn:hover {
+  background-color: #b71c1c;
+  transform: translateY(-2px);
+}
+
+.create-diagram-btn:active,
+.delete-project-btn:active {
+  transform: translateY(0);
+}
+
+/* Delete Modal Styles */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-modal {
+  background-color: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.delete-modal h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+}
+
+.delete-warning {
+  color: #d32f2f;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  font-weight: 500;
+}
+
+.delete-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.delete-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.delete-password-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.delete-password-input:focus {
+  outline: none;
+  border-color: #0081f4;
+}
+
+.delete-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.delete-dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.delete-cancel-btn,
+.delete-confirm-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border: none;
+}
+
+.delete-cancel-btn {
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.delete-confirm-btn {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+  background-color: #b71c1c;
+}
+
+.delete-cancel-btn:disabled,
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .project-details-footer {
   background-color: #1a1f3a;
   color: white;
   text-align: center;
-  padding: 20px;
-  font-size: 12px;
+  padding: 10px;
+  font-size: 10px;
   flex-shrink: 0;
 }
 

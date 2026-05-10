@@ -180,6 +180,91 @@
   flex-shrink: 0;
 }
 
+.diagram-name-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.diagram-name-dialog {
+  background-color: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  width: 90%;
+}
+
+.diagram-name-dialog h3 {
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.diagram-name-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+  transition: border-color 0.2s ease;
+}
+
+.diagram-name-input:focus {
+  outline: none;
+  border-color: #1a1f3a;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.dialog-btn {
+  padding: 10px 24px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.cancel-btn {
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+  border-color: #d0d0d0;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.confirm-btn {
+  background-color: #1a1f3a;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background-color: #2d2f4a;
+}
+
+.dialog-btn:active {
+  transform: scale(0.98);
+}
+
 @media (max-width: 768px) {
   .diagram-selector-main {
     padding: 24px 18px;
