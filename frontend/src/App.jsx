@@ -7,6 +7,7 @@ import StackSelector from './components/pages/StackSelector/StackSelector'
 import DiagramSelector from './components/pages/DiagramSelector/DiagramSelector'
 import ProjectDetails from './components/pages/ProjectDetails/ProjectDetails'
 import ClassDiagram from './components/pages/ClassDiagram/ClassDiagram'
+import OtherDiagram from './components/pages/OtherDiagram/OtherDiagram'
 import UserProfile from './components/pages/UserProfile/UserProfile'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Route path="/diagram-selector" element={<DiagramSelector />} />
       <Route path="/project-details" element={<ProjectDetails />} />
       <Route path="/class-diagram" element={<ClassDiagram />} />
+      <Route path="/other-diagram" element={<OtherDiagram />} />
       <Route path="/profile" element={<UserProfile />} />
       <Route path="/" element={<SignIn />} />
     </Routes>
