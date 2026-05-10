@@ -24,6 +24,5 @@ dist-ssr
 *.sw?
 
 
-frontend/src/assets/
 backend/.env 
 backend/node_modules.zip
