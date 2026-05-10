@@ -54,8 +54,19 @@ function StackSelector() {
   const [selectedStack, setSelectedStack] = useState('')
   const [savedProject, setSavedProject] = useState(null)
   const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSelectStack = (stackId) => {
+  // Map stack IDs to backend values
+  const stackNameMap = {
+    mern: 'MERN',
+    pern: 'PERN',
+    mean: 'MEAN',
+    mevn: 'MEVN',
+    lamp: 'LAMP',
+    jam: 'JAMSTACK',
+  }
+
+  const handleSelectStack = async (stackId) => {
     if (!projectName.trim()) {
       setMessage('Please enter a project name before choosing a stack.')
       setSelectedStack('')
@@ -63,12 +74,56 @@ function StackSelector() {
       return
     }
 
-    const project = {
-      name: projectName.trim(),
-      stack: stackId,
-    }
+    setIsLoading(true)
+    try {
+      const session = JSON.parse(localStorage.getItem('architectauto-auth') || '{}')
+      const token = session.token
 
-    navigate('/diagram-selector', { state: project })
+      if (!token) {
+        setMessage('Authentication required. Please login again.')
+        navigate('/signin')
+        return
+      }
+
+      const response = await fetch('http://localhost:5000/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: projectName.trim(),
+          stack_name: stackNameMap[stackId],
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        setMessage(error.message || 'Failed to create project')
+        setIsLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      const createdProject = {
+        id: data.data.id,
+        name: data.data.name,
+        stack: stackId,
+      }
+
+      setSavedProject(createdProject)
+      setSelectedStack(stackId)
+      setMessage('Project created successfully!')
+
+      setTimeout(() => {
+        navigate('/diagram-selector', { state: createdProject })
+      }, 1000)
+    } catch (error) {
+      console.error('Error creating project:', error)
+      setMessage('An error occurred while creating the project. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -110,6 +165,7 @@ function StackSelector() {
                 id="project-name"
                 type="text"
                 className="form-input"
+                disabled={isLoading}
                 value={projectName}
                 onChange={(event) => {
                   setProjectName(event.target.value)
@@ -117,6 +173,11 @@ function StackSelector() {
                 }}
                 placeholder="E-commerce Website"
               />
+              {message && !savedProject && (
+                <div className="message error">
+                  {message}
+                </div>
+              )}
             </div>
 
             <div className="stack-grid">
@@ -124,7 +185,8 @@ function StackSelector() {
                 <button
                   key={stack.id}
                   type="button"
-                  className={`stack-card ${selectedStack === stack.id ? 'selected' : ''}`}
+                  disabled={isLoading}
+                  className={`stack-card ${selectedStack === stack.id ? 'selected' : ''} ${isLoading ? 'disabled' : ''}`}
                   onClick={() => handleSelectStack(stack.id)}
                 >
                   <div className="stack-card-image-wrapper">
@@ -142,7 +204,7 @@ function StackSelector() {
               ))}
             </div>
 
-            {message && (
+            {message && savedProject && (
               <div className={`message ${savedProject ? 'success' : 'error'}`}>
                 {message}
               </div>
