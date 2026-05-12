@@ -106,11 +106,8 @@ function StackSelector() {
       }
 
       const data = await response.json()
-      const createdProject = {
-        id: data.data.id,
-        name: data.data.name,
-        stack: stackId,
-      }
+      // Pass the complete project object from backend which includes stack_name
+      const createdProject = data.data
 
       setSavedProject(createdProject)
       setSelectedStack(stackId)
