@@ -18,15 +18,23 @@ const ServerGenerator = {
   generate: (classes = []) => {
     const classNames = classes.map(cls => cls.name);
     
-    // Generate imports for routes (PascalCase class names)
-    const routeImports = classNames.length > 0
+    // Generate imports for auth routes (always included)
+    const authRouteImport = `const authRoutes = require('./routes/authRoutes');`;
+    
+    // Generate imports for class routes (PascalCase class names)
+    const classRouteImports = classNames.length > 0
       ? classNames
           .map(name => `const ${name}Routes = require('./routes/${name}Routes');`)
           .join('\n')
-      : '// No routes to import';
+      : '// No class routes to import';
+
+    const routeImports = `${authRouteImport}${classRouteImports ? '\n' + classRouteImports : ''}`;
 
     // Generate route mounting (kebab-case paths)
-    const routeMounting = classNames.length > 0
+    // Auth routes are mounted first (public routes)
+    const authRouteMounting = `app.use('/api/auth', authRoutes);`;
+    
+    const classRouteMounting = classNames.length > 0
       ? classNames
           .map(name => {
             const kebabName = name
@@ -35,7 +43,9 @@ const ServerGenerator = {
             return `app.use('/api/${kebabName}', ${name}Routes);`;
           })
           .join('\n')
-      : '// No routes to mount';
+      : '// No class routes to mount';
+
+    const routeMounting = `${authRouteMounting}${classRouteMounting ? '\n' + classRouteMounting : ''}`;
 
     const server = `require('dotenv').config();
 const express = require('express');

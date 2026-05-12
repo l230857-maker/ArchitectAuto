@@ -30,6 +30,9 @@ const CodeGeneratorInputValidator = require('./src/adapters/services/CodeGenerat
 const TypeMapper = require('./src/adapters/services/TypeMapper');
 const ModelGenerator = require('./src/adapters/services/ModelGenerator');
 const ControllerGenerator = require('./src/adapters/services/ControllerGenerator');
+const UserModelGenerator = require('./src/adapters/services/UserModelGenerator');
+const AuthControllerGenerator = require('./src/adapters/services/AuthControllerGenerator');
+const AuthRoutesGenerator = require('./src/adapters/services/AuthRoutesGenerator');
 const RouteGenerator = require('./src/adapters/services/RouteGenerator');
 const ComponentGenerator = require('./src/adapters/services/ComponentGenerator');
 const ReadmeGenerator = require('./src/adapters/services/ReadmeGenerator');
@@ -87,6 +90,9 @@ const inputValidator = CodeGeneratorInputValidator;
 const typeMapper = TypeMapper;
 const modelGenerator = ModelGenerator;
 const controllerGenerator = ControllerGenerator;
+const userModelGenerator = UserModelGenerator;
+const authControllerGenerator = AuthControllerGenerator;
+const authRoutesGenerator = AuthRoutesGenerator;
 const routeGenerator = RouteGenerator;
 const componentGenerator = ComponentGenerator;
 const readmeGenerator = ReadmeGenerator;
@@ -105,6 +111,9 @@ const generateCodeUseCase = createGenerateCodeUseCase({
   inputValidator,
   modelGenerator,
   controllerGenerator,
+  userModelGenerator,
+  authControllerGenerator,
+  authRoutesGenerator,
   routeGenerator,
   componentGenerator,
   readmeGenerator,

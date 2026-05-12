@@ -125,12 +125,15 @@ Generated files are organized as follows:
 \`\`\`
 generated-code/
 ├── models/
+│   ├── User.js (Authentication - stores user accounts)
 │   ${classes.map((cls) => `├── ${ReadmeGenerator.toPascalCase(cls.name)}.js`).join('\n   ')}
 │   └── (Mongoose schemas and models)
 ├── controllers/
+│   ├── AuthController.js (Handles signup and signin)
 │   ${classes.map((cls) => `├── ${ReadmeGenerator.toPascalCase(cls.name)}Controller.js`).join('\n   ')}
 │   └── (Express controller functions)
 ├── routes/
+│   ├── authRoutes.js (Public auth endpoints)
 │   ${classes.map((cls) => `├── ${ReadmeGenerator.toPascalCase(cls.name)}Routes.js`).join('\n   ')}
 │   └── (RESTful API routes)
 ├── components/
@@ -160,11 +163,100 @@ ${classes.map((cls) => {
 
 ---
 
+## � Authentication
+
+This generated backend includes a complete authentication system. All your diagram classes are protected and require authentication.
+
+### Getting Started with Authentication
+
+#### 1. Sign Up (Create New Account)
+
+**Endpoint:** \`POST /api/auth/signup\`
+
+**Request:**
+\`\`\`bash
+curl -X POST http://localhost:5000/api/auth/signup \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+\`\`\`
+
+**Response (201 Created):**
+\`\`\`json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "_id": "507f1f77bcf86cd799439011",
+      "email": "user@example.com",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MDdmMWY3N2JjZjg2Y2Q3OTk0MzkwMTEiLCJpYXQiOjE3MDUzMjM4MDB9.abcdefghijk..."
+  },
+  "message": "User created successfully"
+}
+\`\`\`
+
+**Save the token** from the response - you'll use it for all protected requests.
+
+#### 2. Sign In (Existing User)
+
+**Endpoint:** \`POST /api/auth/signin\`
+
+**Request:**
+\`\`\`bash
+curl -X POST http://localhost:5000/api/auth/signin \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+\`\`\`
+
+**Response (200 OK):**
+\`\`\`json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "_id": "507f1f77bcf86cd799439011",
+      "email": "user@example.com",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MDdmMWY3N2JjZjg2Y2Q3OTk0MzkwMTEiLCJpYXQiOjE3MDUzMjM4MDB9.abcdefghijk..."
+  },
+  "message": "User signed in successfully"
+}
+\`\`\`
+
+#### 3. Use the Token for Protected Routes
+
+Once you have a token, include it in all requests to your protected routes. Example: Create a resource:
+
+\`\`\`bash
+curl -X POST http://localhost:5000/api/order \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <your-token-here>" \\
+  -d '{
+    "field1": "value1",
+    "field2": "value2"
+  }'
+\`\`\`
+
+**Authorization Header Format:**
+\`\`\`
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+\`\`\`
+
+---
+
 ## 🔌 API Endpoints
 
 ### ✅ Authentication Required
 
-All API endpoints require authentication via JWT token. Include the token in the \`Authorization\` header:
+All API endpoints for your diagram classes require authentication via JWT token. Include the token in the \`Authorization\` header:
 
 \`\`\`
 Authorization: Bearer <your-jwt-token>

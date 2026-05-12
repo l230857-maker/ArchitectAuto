@@ -377,37 +377,6 @@ function OtherDiagram() {
     }
   }
 
-  // Import diagram functionality
-  const importDiagram = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = handleImportFile
-    input.click()
-  }
-
-  const handleImportFile = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    try {
-      const text = await file.text()
-      const data = JSON.parse(text)
-
-      if (data.visualLayout) {
-        setNodes(data.visualLayout.nodes || [])
-        setEdges(data.visualLayout.edges || [])
-        setMessage('✓ Diagram imported successfully!')
-        setTimeout(() => setMessage(''), 3000)
-      } else {
-        setMessage('Invalid diagram file format.')
-      }
-    } catch (error) {
-      console.error('Import error:', error)
-      setMessage('Failed to import diagram.')
-    }
-  }
-
   // Export diagram functionality
   const exportDiagram = async () => {
     setMessage('Preparing export options...')
@@ -733,9 +702,6 @@ function OtherDiagram() {
         <div className="class-diagram-header-actions">
           <button type="button" className="action-btn" onClick={saveDiagram}>
             Save
-          </button>
-          <button type="button" className="action-btn" onClick={importDiagram}>
-            Import
           </button>
           <button type="button" className="action-btn" onClick={exportDiagram}>
             Export

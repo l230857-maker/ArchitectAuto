@@ -6,6 +6,9 @@ const createGenerateCodeUseCase = ({
   inputValidator,
   modelGenerator,
   controllerGenerator,
+  userModelGenerator,
+  authControllerGenerator,
+  authRoutesGenerator,
   routeGenerator,
   componentGenerator,
   readmeGenerator,
@@ -69,6 +72,15 @@ const createGenerateCodeUseCase = ({
     }
 
     try {
+      // Generate User model for authentication (always included)
+      const userModel = userModelGenerator.generate();
+      files.push(...userModel);
+    } catch (error) {
+      console.error('Error generating User model:', error.message);
+      errors.push(`User model generation failed: ${error.message}`);
+    }
+
+    try {
       // Generate controllers
       const controllers = controllerGenerator.generate(classes, relationships);
       files.push(...controllers);
@@ -78,12 +90,30 @@ const createGenerateCodeUseCase = ({
     }
 
     try {
+      // Generate Auth Controller for authentication (always included)
+      const authController = authControllerGenerator.generate();
+      files.push(...authController);
+    } catch (error) {
+      console.error('Error generating Auth Controller:', error.message);
+      errors.push(`Auth controller generation failed: ${error.message}`);
+    }
+
+    try {
       // Generate routes
       const routes = routeGenerator.generate(classes);
       files.push(...routes);
     } catch (error) {
       console.error('Error generating routes:', error.message);
       errors.push(`Route generation failed: ${error.message}`);
+    }
+
+    try {
+      // Generate Auth Routes for authentication (always included)
+      const authRoutes = authRoutesGenerator.generate();
+      files.push(...authRoutes);
+    } catch (error) {
+      console.error('Error generating auth routes:', error.message);
+      errors.push(`Auth routes generation failed: ${error.message}`);
     }
 
     try {

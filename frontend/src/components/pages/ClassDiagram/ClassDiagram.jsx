@@ -26,6 +26,7 @@ const initialEdges = []
 
 // Data type options for attributes
 const DATA_TYPES = [
+  'string',
   'number',
   'boolean',
   'array',
@@ -35,6 +36,7 @@ const DATA_TYPES = [
 
 // Return type options for methods
 const RETURN_TYPES = [
+  'string',
   'number',
   'boolean',
   'array',
@@ -57,7 +59,6 @@ function ClassDiagram() {
   const project = location.state?.project
   const diagram = location.state?.diagram
   const from = location.state?.from || 'project-details'
-  const fileInputRef = useRef(null)
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNodeId, setSelectedNodeId] = useState(null)
@@ -480,23 +481,6 @@ function ClassDiagram() {
     } catch (error) {
       console.error('Error saving diagram:', error)
       setMessage('An error occurred while saving the diagram')
-    }
-  }
-
-  const importDiagram = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleImportFile = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (file.name.endsWith('.svg')) {
-      const svgText = await file.text()
-      console.log('Imported SVG content:', svgText)
-      setMessage('Imported SVG file. Rendering requires advanced backend or additional parsing logic.')
-    } else {
-      setMessage('Only .svg file import is supported in this demo.')
     }
   }
 
@@ -955,9 +939,6 @@ function ClassDiagram() {
           <button type="button" className="action-btn" onClick={saveDiagram}>
             Save
           </button>
-          <button type="button" className="action-btn" onClick={importDiagram}>
-            Import
-          </button>
           <button type="button" className="action-btn" onClick={exportDiagram}>
             Export
           </button>
@@ -1318,8 +1299,6 @@ function ClassDiagram() {
             )}
 
           </div>
-
-          <input ref={fileInputRef} type="file" accept=".svg" hidden onChange={handleImportFile} />
         </aside>
       </main>
     </div>

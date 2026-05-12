@@ -157,7 +157,7 @@ const authenticate = (req, res, next) => {
 
     // Verify JWT token (assumes JWT_SECRET is set in environment)
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
     
     // Attach user info to request object for use in controllers
     req.user = decoded;
